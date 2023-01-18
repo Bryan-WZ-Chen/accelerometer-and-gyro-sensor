@@ -85,10 +85,129 @@ And do the following changes:
    <<<Add custom driver build flag here to include in island if required>>>
 ```
 ### Registry
-Then we need to registry our sensor, sometimes you may see people say "push registry files", it's basically the same thing.</br>
-Push registry to path: </br>
+Then we need to registry our sensor, sometimes you may see people say "push registry files", it's basically the same thing. The registry file primarily contains your hardware configuration.</br>
+You need to push registry at path: </br>
 ```
 /vendor/etc/sensors/config/
 ```
+This path may vary depends on your current Android BSP version.</br> 
+
+Then how to push registry file?</br>
+ This part is quite tricky and complicated. Basically Qualcomm SEE use a json file as a sensor config file. Contrary to the old Qualcomm sensor architecture, there's no file like "sensor_def_qcomdev.conf"(conf means "config") in this new architecture. And you may see statements like you need to register two json files for your sensor, one for the platform-specific configuration and another for the sensor driver. But as for my case or maybe in this new architecture, I just need platform-specific configuration.</br>
+
+ I will only talk about import setting on json file simply but I won't and can't go too much detail since this part is seen as proprietary of Qualcomm.
+First step you can get json config file for this sensor from vendor's FAE engineer, if they don't provide you then just copy the content of arbitray json config file (please at least copy the "same" type of sensor) and create a json file at the path above then paste that content.
+
+Then you may get something like this:
+"""
+{
+  "config":{
+    "hw_platform": ["MTP", "Surf", "RCM", "QRD", "HDK"],
+    "soc_id": ["356"]
+  },
+  "icm4x6xx_0":{
+    "owner": "icm4x6xx",
+    ".accel":{
+      "owner": "icm4x6xx",
+      ".config":{
+        "owner": "icm4x6xx",
+        "is_dri":{ "type": "int", "ver": "0",
+          "data": "1"
+        },
+        ...
+      }
+    },
+    ".gyro":{
+      "owner": "icm4x6xx",
+      ".config":{
+        "owner": "icm4x6xx",
+        "is_dri":{ "type": "int", "ver": "0",
+          "data": "1"
+        },
+       ...
+      }
+    },
+    ".md":{
+      "owner": "icm4x6xx",
+      ".config":{
+        "owner": "icm4x6xx",
+        "is_dri":{ "type": "int", "ver": "0",
+          "data": "1"
+        },
+        ...
+      }
+    },
+    ".freefall":{
+      "owner": "icm4x6xx",
+      ".config":{
+        "owner": "icm4x6xx",
+        "is_dri":{ "type": "int", "ver": "0",
+          "data": "1"
+        },
+        ...
+      }
+    },
+    ".temp":{
+      "owner": "icm4x6xx",
+      ".config":{
+        "owner": "icm4x6xx",
+        "is_dri":{ "type": "int", "ver": "0",
+          "data": "0"
+        },
+        ...
+      }
+    }
+  },
+  "icm4x6xx_0_platform":{
+    "owner": "icm4x6xx",
+    ".config":{
+      "owner": "icm4x6xx",
+      "bus_type":{ "type": "int", "ver": "0",
+        "data": "3"
+      },
+      "bus_instance":{ "type": "int", "ver": "0",
+        "data": "1"
+      },
+      "slave_config":{ "type": "int", "ver": "0",
+        "data": "0x68"
+      },
+      "i3c_address":{ "type": "int", "ver": "0",
+        "data": "11"
+      },
+      ...
+      "reg_addr_type":{ "type": "int", "ver": "0",
+        "data": "0"
+      },
+      "dri_irq_num":{ "type": "int", "ver": "0",
+        "data": "123"
+      },
+      ...
+      "num_rail":{ "type": "int", "ver": "0",
+        "data": "1"
+      },
+      ...
+      "vddio_rail":{ "type": "str", "ver": "0",
+        "data": "/pmic/client/sensor_vddio"
+      },
+      ...
+    },
+    ...
+  }
+}
+"""
+
+Let's go through the import settings one by one:
+(You can get more details on Qualcomm's document: Sensor deepdive)
+* First thing you might need to change is hw_platform and soc_id.
+    * You can first check your platform using the command 
+
+* Second, check with hardware team the pin number of interrupt gpio and change dri_irq_num with corresponding one:
+```
+"dri_irq_num":{ "type": "int", "ver": "0",
+        "data": "your_interrupt_gpio_pin_number"
+}
+```
+
+ 
 
 ## Result
