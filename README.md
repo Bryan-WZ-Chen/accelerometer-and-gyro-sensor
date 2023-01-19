@@ -19,7 +19,7 @@ Due to confidential policy of Qualcomm, this tutorial won't involve in too many 
 ## Architecture of sensor
 Following picture is the structure of Qualcomm's sensor hub.
 
-![structure](./architecture.jpg)
+<img src="./architecture.jpg" width="500" height="300">
 
 As you can see in the figure, there are mainly three components:
 * app
@@ -28,18 +28,16 @@ As you can see in the figure, there are mainly three components:
 
 This diagram drastically simplies the actual structure but the idea is SEE framework is responsible for provides services to sensors, manages registry, handles client interface etc.
 
-As a result, we'll mainly work on SEE.</br>
-Then here comes a question:</br>
+As a result, we'll mainly work on SEE. Then here comes a question:</br>
 How does the diagram map to Android OS architecture?
-
 
 Before that we need to talk about what non-hlos is:</br>
 >non-hlos can be considered the core BSP and other supported software package, which performs the bare minimum functionalities at system boot-up including loading the High Level OS(Linux/ Android/ Windows). Non-hlos is typically provided by the vendors owning the hardware(HW) platform.
 
 >So it will be something like the following diagram I draw:
- Non-hlos includes firmware and device drivers thus it is located between the Hardware Abstraction Layer (HAL) and the Linux kernel. Sometimes you see people say non-HlOS software is located below the Linux kernel layer and above the hardware and sometimes you see statement like non-HLOS software communicates with the Linux kernel through the Hardware Abstraction Layer (HAL). They both are correct because "non-hlOS includes firmware and device drivers". It's easily confusing since the Android OS architecture diagrams on the Internet don't include non-hlos and you can barely find any useful explanation about non-hlos. Possibly it's because non-hlos is typically provided by the vendors owning the HW platform which is proprietary to them. 
+Sometimes you see people say non-HlOS software is located below the Linux kernel layer and above the hardware and sometimes you see statement like non-HLOS software communicates with the Linux kernel through the Hardware Abstraction Layer (HAL). They both are correct because "non-hlOS includes firmware and device drivers". 
 
-![structure2](./android-stack_2x.png)
+<img src="./android-stack_2x.png" width="400" height="500">
 
 Back to the problem, the actual mapping between sensor execution environment(SEE) and Android OS architecture is basically on nonhlos layer. This makes sense since we have physical sensors and we want it to be integrated into Android OS thus non-hlos takes the role.
 
@@ -116,9 +114,6 @@ Then you may get something like this:
       "slave_config":{ "type": "int", "ver": "0",
         "data": "0x68"
       },
-      "i3c_address":{ "type": "int", "ver": "0",
-        "data": "11"
-      },
       ...
       "dri_irq_num":{ "type": "int", "ver": "0",
         "data": "123"
@@ -141,8 +136,7 @@ Let's go through the import settings one by one:
         ```
         cat /sys/devices/soc0/soc_id
         ```
-    * Remember "hw_platform": ["xxx"]; Need to match to the output of "cat /sys/devices/soc0/hw_platform". Similarly, "soc_id": ["some_number_here"]; Need to match to the output of "cat /sys/devices/soc0/soc_id"
-
+        
 * Second, check with hardware team the pin number of interrupt gpio and change dri_irq_num with corresponding one:
 ```
 "dri_irq_num":{ "type": "int", "ver": "0",
@@ -152,8 +146,10 @@ Let's go through the import settings one by one:
 
 * Third, check with hardware team how your sensor communicates with SOC(System on a Chip). In my case, the way of communication is through I²C. The I²C structure is as following diagram.</br>
 
-![i2c](./I2C_structure.PNG)
+<img src="./I2C_structure.PNG" width="500" height="200">
+
  The I²C communication protocol uses only two bidirectional open collector or open drain lines, Serial Data Line (SDA) and Serial Clock Line (SCL). As you can see in the diagram, there can be multiple "slaves". Since those slaves share the same SDA and SCL, we need the so called "slave address" to distinguish between them. Thus, in this part, you need to set the way of communication your sensor uses, the SDA and SCL gpio pin numbers and slave address.
+ 
  * To set the way of communication, just change bus_type data:</br>
  0 means I²C; 1 means: SPI bus; 3 means I3C (You can found these in Qualcomm's document)
  ```
