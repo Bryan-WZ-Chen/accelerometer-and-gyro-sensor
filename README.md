@@ -79,7 +79,7 @@ And do the following changes:
    <<<Add custom driver build flag here to include in island if required>>>
 ```
 ### Registry
-Then we need to registry our sensor, sometimes you may see people say "push registry files", it's basically the same thing. The registry file primarily contains your hardware configuration.</br>
+Then we need to registry our sensor. The registry file primarily contains your hardware configuration.</br>
 You need to push registry at path: </br>
 ```
 /vendor/etc/sensors/config/
@@ -87,10 +87,12 @@ You need to push registry at path: </br>
 This path may vary depends on your current Android BSP version.</br> 
 
 Then how to push registry file?</br>
+
  Basically Qualcomm SEE use a json file as a sensor config file. Contrary to the old Qualcomm sensor architecture, there's no file like "sensor_def_qcomdev.conf" in this new architecture. And you may see statements like you need to register two json files for your sensor, one for the platform-specific and another for the sensor driver. But as for my case or maybe in this new architecture, I just need platform-specific configuration.</br>
 
- I will only talk about import setting on json file simply since this part is seen as proprietary of Qualcomm.
-First step you can get json config file for this sensor from vendor's FAE engineer, if they don't provide you then just copy the content of arbitray json config file (please at least copy the "same" type of sensor) and create a json file at the path above then paste that content.
+ I will only talk about import setting on json file simply since this part is seen as proprietary of Qualcomm.</br>
+ 
+First Copy the content of sensor vendor's json config file and create a json file at the path above then paste that content.
 
 Then you may get something like this:
 ```
@@ -148,7 +150,7 @@ Let's go through the import settings one by one:
 
 <img src="./I2C_structure.PNG" width="500" height="200">
 
- The I²C communication protocol uses only two bidirectional open collector or open drain lines, Serial Data Line (SDA) and Serial Clock Line (SCL). As you can see in the diagram, there can be multiple "slaves". Since those slaves share the same SDA and SCL, we need the so called "slave address" to distinguish between them. Thus, in this part, you need to set the way of communication your sensor uses, the SDA and SCL gpio pin numbers and slave address.
+ As you can see in the diagram, there can be multiple "slaves". Since those slaves share the same SDA and SCL, we need the so called "slave address" to distinguish between them. Thus, in this part, you need to set the way of communication your sensor uses, the SDA and SCL gpio pin numbers and slave address.
  
  * To set the way of communication, just change bus_type data:</br>
  0 means I²C; 1 means: SPI bus; 3 means I3C (You can found these in Qualcomm's document)
@@ -161,7 +163,7 @@ Let's go through the import settings one by one:
  ```
 GPIO_159~GPIO_174 == SSC_0~SSC_15
  ``` 
-So in my case, I use gpio 161 and gpio 162 as my SDA and SCL. These gpios map to SSC_2 and SSC_3. And then Qualcomm use QUP to wrap SSC_${number}. For example, SSC_2 and SSC_3 are mapped to QUP2</br>
+In my case, I use gpio 161 and gpio 162 as my SDA and SCL. These gpios map to SSC_2 and SSC_3. And then Qualcomm use QUP to wrap SSC_${number}. For example, SSC_2 and SSC_3 are mapped to QUP2</br>
    
 *  How do we know this GPIO mapping?</br>
     * You can refer to the table in Qualcomm's document: 80-PT831-24_AA page 12. 
@@ -204,6 +206,3 @@ All sensors that use Qualcomm sensor hub can be brought up in the same way. So y
 
 ## Result for light sensor
 https://user-images.githubusercontent.com/57974543/213349832-0ec53439-a255-4175-b774-7cafa6f267ec.mp4
-
-
-
