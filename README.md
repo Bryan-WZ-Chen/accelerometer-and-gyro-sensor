@@ -4,7 +4,7 @@ An overview of how to bring up sensor using Qualcomm Sensor Hub
 ## Information
 * SOC platform: Qualcomm QCS6490
 * Platform info: IDP
-* Communication bus: I2C
+* Communication bus: I²C
 
 ## Outline
 * Introduction
@@ -99,7 +99,7 @@ Then how to push registry file?</br>
 First step you can get json config file for this sensor from vendor's FAE engineer, if they don't provide you then just copy the content of arbitray json config file (please at least copy the "same" type of sensor) and create a json file at the path above then paste that content.
 
 Then you may get something like this:
-"""
+```
 {
   "config":{
     "hw_platform": ["MTP", "Surf", "RCM", "QRD", "HDK"],
@@ -194,20 +194,78 @@ Then you may get something like this:
     ...
   }
 }
-"""
+```
 
 Let's go through the import settings one by one:
-(You can get more details on Qualcomm's document: Sensor deepdive)
-* First thing you might need to change is hw_platform and soc_id.
-    * You can first check your platform using the command 
+(You can get more details on Qualcomm's document: Sensors Execution Environment (SEE) Sensors Deep Dive)
+* First thing you might need to change are hw_platform and soc_id.
+    * You can check hw_platform using the command in adb shell:
+        ```
+        cat /sys/devices/soc0/hw_platform
+        ```
+    * You can check soc_id with command:
+        ```
+        cat /sys/devices/soc0/soc_id
+        ```
+    * Remember "hw_platform": ["xxx"]; Need to match to the output of "cat /sys/devices/soc0/hw_platform". Similarly, "soc_id": ["some_number_here"]; Need to match to the output of "cat /sys/devices/soc0/soc_id"
 
 * Second, check with hardware team the pin number of interrupt gpio and change dri_irq_num with corresponding one:
 ```
 "dri_irq_num":{ "type": "int", "ver": "0",
-        "data": "your_interrupt_gpio_pin_number"
+    "data": "your_interrupt_gpio_pin_number"
 }
 ```
 
- 
+* Third, check with hardware team how your sensor communicates with SOC(System on a Chip). In my case, the way of communication is through I²C. The I²C structure is as following diagram.</br>
+
+![i2c](./I2C_structure.PNG)
+ The I²C communication protocol uses only two bidirectional open collector or open drain lines, Serial Data Line (SDA) and Serial Clock Line (SCL). As you can see in the diagram, there can be multiple "slaves". Since those slaves share the same SDA and SCL, we need the so called "slave address" to distinguish between them. Thus, in this part, you need to set the way of communication your sensor uses, the SDA and SCL gpio pin numbers and slave address.
+ * To set the way of communication, just change bus_type data:</br>
+ 0 means I²C; 1 means: SPI bus; 3 means I3C (You can found these in Qualcomm's document)
+ ```
+ "bus_type":{ "type": "int", "ver": "0",
+    "data": "0"
+}
+ ```
+ * Then we need to set the SDA and SCL gpio pin numbers. Actually I don't think you can use arbitray gpio pin number as I²C because not every gpio has the same behavior (like frequency etc) as a normal I²C. So usually hardware platform vendor reserve some set of gpios as I²C. They will encapsulate those gpios and we just use them. In Qualcomm, they design normal gpio pin number from 159 ~ 174 as what they call "SSC GPIO". That is:</br>
+ ```
+GPIO_159~GPIO_174 == SSC_0~SSC_15
+ ``` 
+So in my case, I use gpio 161 and gpio 162 as my SDA and SCL. These gpios map to SSC_2 and SSC_3. And then Qualcomm use QUP to wrap SSC_${number}. For example, SSC_2 and SSC_3 are mapped to QUP2</br>
+   
+*  How do we know this GPIO mapping?</br>
+    * You can refer to the table in Qualcomm's document: 80-PT831-24_AA page 12. 
+    * Or you can check following files for more information:
+    ```
+    adsp_proc\core\settings\buses\qup_common\config\kodiak\adsp\ssc\up_devcfg.c,  adsp_proc\core\settings\buses\qup_common\config\kodiak\adsp\ssc\Qup_instance_mapping.c adsp_proc\core\settings\buses\qup_common\config\kodiak\adsp\ssc\ Qup_devcfg.json
+    ```
+
+We set SDA abd SCL gpio pin numbers through QUP_${number} and set ${number} to bus_instance:
+```
+"bus_instance":{ "type": "int", "ver": "0",
+    "data": "2"
+}
+```
+
+Lastly, set the slave config. You can ask hardware team or sensor vendor's FAE for this information. In my case, slave address is 104.
+```
+"slave_config":{ "type": "int", "ver": "0",
+    "data": "104"
+}
+```
+
+That's generally how a sensor is brought up in Qualcomm's sensor hub. Of course there are some configs like interrupt type, sensor frequency etc. you might need to change. But I don't think that will be a problm. You can reference Qualcomm's document to do so.</br>
+
+### Then how do we know a sensor is actually brought up?
+You can type the following command:
+```
+adb root
+1) adb shell ssc_sensor_info > ssc_sensor_info.txt
+2) adb shell see_workhorse > see_workhorse.txt
+*** 1~2 for checking whether sensor has been brought up in ADSP ***
+```
+If you found your sensor in the files then your sensor is successfully brought up!
 
 ## Result
+
+
