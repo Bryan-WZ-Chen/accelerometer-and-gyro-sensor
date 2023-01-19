@@ -266,8 +266,14 @@ adb root
 ```
 If you found your sensor in the files then your sensor is successfully brought up!
 
-## Result
+## Result for accelerometer-and-gyro-sensor
 https://user-images.githubusercontent.com/57974543/213348656-32ace940-7305-4858-b720-753fd0ba7849.mp4
+
+## Remarks
+All sensors that use Qualcomm sensor hub can be brought up in the same. So you can bring up light sensor, magnetic sensor etc. without pain.
+
+## Result for light sensor
+https://user-images.githubusercontent.com/57974543/213349832-0ec53439-a255-4175-b774-7cafa6f267ec.mp4
 
 
 
