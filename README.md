@@ -267,5 +267,7 @@ adb root
 If you found your sensor in the files then your sensor is successfully brought up!
 
 ## Result
+https://user-images.githubusercontent.com/57974543/213348656-32ace940-7305-4858-b720-753fd0ba7849.mp4
+
 
 
